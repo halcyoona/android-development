@@ -1,0 +1,295 @@
+Making Connection of a Android application to Internet
+
+Most of the application in andriod now a days use data from internet it might be contacts, game data, weather or other information.This data is provided from internet through Web API.
+
+In this tutorial we can take an example of Github Query App and make a connection of Android App to internet.
+
+Creating Layout
+
+After starting empty activity in a new project in Andriod Studio,First thing you have to do is go to activity_main.xlm and make some changes.Delete a Constraint Layout and create a new Linear Layout.Create a EditText, inside Linear Layout, where user can enter their input data and give proper ID to EditText and other properties.Create  a TextView,inside Linear Layout, to show the Url and give proper ID and other properties.You have to create a ScrollView,inside Linear Layout, to scroll on a result. Create a TextView  inside the ScrollView and give proper ID to this and other properties.
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingTop="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="22sp"
+        android:id="@+id/et_search_box"
+        android:hint="Enter a query and click search" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="22sp"
+        android:id="@+id/tv_url_display"
+        android:layout_marginTop="8dp"
+        android:hint="your search will be shown here"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:id="@+id/tv_github_search_result_json"
+            android:hint="make a search"/>
+    </ScrollView>
+</LinearLayout>
+
+
+Now move to MainActivity.java and make some changes.Create a variable for EditText and TextView inside the MainActivity class.
+
+EditText mSearchBoxEditText;
+TextView mUrlDisplayTextView;
+TextView mSearchResultsTextView;
+
+Use findByViewId to get a reference to TextView and EditText.This should be done inside the onCreate() function.
+
+
+mSearchBoxEditText = (EditText) findViewById(R.id.et_search_box);
+mUrlDisplayTextView = (TextView) findViewById(R.id.tv_url_display);
+mSearchResultsTextView = (TextView) findViewById(R.id.tv_github_search_result_json);
+
+Move to build.gradle and remove the following dependency from dependencies as we are not using Constraint layout
+implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+
+Move to res directory in this directory their is sub-directory named as "values" and  there is string.xlm.Open string.xlm and add a string resource called search with the title Search.
+<string name="search">Search</string>
+
+Create a sub-directory menu in a res directory and inside menu create main.xlm.Add following line in properties of menu-tag.
+xmlns:app="http://schemas.android.com/apk/res-auto"
+
+Create a item inside the menu and give a proper ID and title.
+<item
+        android:id="@+id/action_search"
+        android:orderInCategory="1"
+        app:showAsAction="ifRoom"
+        android:title="@string/search"/>
+
+app:showAsAction is used to show "Search" as button on a menu tab. 
+
+Override the onCreateOptionsMenu(), inside the MainActivity class.In this function, we are going to call getMenuInflator() and that will inflate the menu resources that is passed to it.
+
+@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+
+Override the onOptionsItemSelected(), inside the MainActivity class.In this function get the ID of the selected item and match the id of search_search then return true.
+
+
+@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int menuItemThatWasSelected = item.getItemId();
+        if (menuItemThatWasSelected == R.id.action_search){
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+Layout is completed. Now move to next part i.e connectivity to internet.
+
+
+
+Connectivity
+
+Make sub-directory with the name 'utilities' in the directory where MainActivity.java is placed.With in the utilities directory, make a class of NetworkUtils.These utilities used to communicate with the internet.In NetworkUtils class, we declare string variable for API that we are using and in which order you have to show data i.e sorting and other properties of you desire.
+
+final static String GITHUB_BASE_URL = "https://api.github.com/search/repositories";
+final static String PARAM_QUERY = "q";
+final static String PARAM_SORT = "sort";
+final static String sortBy = "stars";  
+
+Create a buildUrl() inside the NetworlUtils class, that will take search text as parameter and that function return a URL of the search text.Basically,In URL there is some specail character like &,?. So we are not be able to put these character in a specified position therefore we use Uri class to built a URL.First we parse the base Url on which Url is build upon and then append the parameters like search parameter and sort parameter.
+
+public static URL buildUrl(String githubSearchQuery) {
+    Uri builtUri = Uri.parse(GITHUB_BASE_URL).buildUpon().appendQueryParameter(PARAM_QUERY,githubSearchQuery).appendQueryParameter(PARAM_SORT,sortBy).build();
+    URL url = null;
+    try {
+        url = new URL(builtUri.toString());
+    }
+    catch(MalformedURLException e){
+        e.printStackTrace();
+    }
+
+    return url;
+}
+
+
+Create getResponseFromHttpUrl() inside the Networkutils class, that takes URL as parameter and return a entire response from HTTP.We make a object i.e urlConnection, of class HttpURLConnection and call a openConnection() function to open the connection with the help of Url.Create another object i.e in, of InputStrem to take inputdata from that urlConnection by using getInputStream() function. We declare the object of Scanner class to read the data from from InputStream variable return that data as a string. 
+
+public static String getResponseFromHttpUrl(URL url) throws IOException {
+    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+    try {
+        InputStream in = urlConnection.getInputStream();
+
+        Scanner scanner = new Scanner(in);
+        scanner.useDelimiter("\\A");
+
+        boolean hasInput = scanner.hasNext();
+        if (hasInput) {
+            return scanner.next();
+        } else {
+            return null;
+        }
+    } finally {
+        urlConnection.disconnect();
+    }
+}
+
+
+Move to MainActivity.java and create makeGithubSearchQuery() inside the MainActivity class,in this function build a url with the search text from EditText and set the build Url to the TextView where we have to show the Url.
+
+private void makeGithubSearchQuery() {
+    String githubQuery = mSearchBoxEditText.getText().toString();
+    URL githubSearchUrl = NetworkUtils.buildUrl(githubQuery);
+    mUrlDisplayTextView.setText(githubSearchUrl.toString());
+}
+
+
+call makeGithubSearchQuery() inside the if statement of onOptionsItemSelected() function.
+
+if (menuItemThatWasSelected == R.id.action_search){
+	makeGithubSearchQuery(); 	
+    return true;
+}
+
+Now look at our app is connected to internet.
+
+Move to manifest directory and open AndriodManifest.xml and add internet permissions.Andriod user do not want any application to access another Andriod application directly without any permission from you.We should first ask for permission from user to access to another app like to check your location, to open camera, to connect to internet.   
+<uses-permission android:name="android.permission.INTERNET"/>
+
+.Declare a string to store a results.Use try / catch block to catch the IOException and inside this block Call to getResponseFromHttpUrl() and show results in mSearchResultsTextView.
+
+String githubSearchResults = null;
+try{
+    githubSearchResults = NetworkUtils.getResponseFromHttpUrl(githubSearchUrl);
+    mSearchResultsTextView.setText(githubSearchResults);
+}
+catch (IOException e){
+    e.printStackTrace();
+}
+
+AsyncTask
+
+Andriod through exception when you try to access network on a main thread.Andriod support multipe things at time you can see this when you press recent's key to swipe to anohter app.Andriod use multithreading. Each andriod app can be  divided into multiple threads of excution and that can all run concurrently. On Modern andriod device, these thread of execution be schedule by the OS to run on the different CPU cores.To make thing easier for andriod developer, Andriod app have Single User Interface Thread as a main thread and this thread is responsible for getting advance from various sensors and setting up the next frame to draw.To run to ideal 60 FPS,we need to make sure that  all the computation between draws take less then 17ms.In other words, we want to do as little as possible on this main thread but netwroking takes seconds that's means user will be frozen all that time if the networking is call on a main thread.After five second of ignoring user's input,Andriod actually prompt the user to close the app.So when using network, we need to run network as a secondary execution thread therefore we need to make some changes to the interface like set the TextView to show the text in UI(User Interface) thread.Therefore, Andriod provide helpful frame work  for this purpose i.e AsyncTask.
+
+Asyntask is generic class, which allow you to run a task on background thread while publishing results on UI(User Interface) thread.
+
+Open MainActivity.java and create a class GithubQueryTask that extends AsyncTask class,inside the MainActivity class.And override the doInBackground() function, which takes Url array as parameter and return the results in string.
+
+public class GithubQueryTask extends AsyncTask<URL, Void, String> {
+
+    @Override
+    protected String doInBackground(URL... params) {
+        URL searchUrl = params[0];
+        String githubSearchResults = null;
+        try {
+            githubSearchResults = NetworkUtils.getResponseFromHttpUrl(searchUrl);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return githubSearchResults;
+    }
+
+}
+
+
+Make a change in the makeGithubSearchQuery() function in MainActivity.java. Call a function execute with the GithubQueryTask() constructor, inside the GithubSearchQuery() function.
+new GithubQueryTask().execute(githubSearchUrl);
+
+
+Polishing
+
+Through out in above tutorial we aren't handle any erorrs like there would be network problem or other errors.So we gonna handle error here.
+First go into the res directory there is a sub-directory values and inside in sub-directory, open string.xml and add string of error message.
+<string name="error_message">Failed to get results. Please try again.</string>
+
+Open activity_main.xml and wrap the scrollView inside the frame layout. Create a TextView to show error message and create a ProgressBar to indicate loading , inside the frame layout and make them invisible.
+
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:id="@+id/tv_github_search_result_json"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Make a search!"
+            android:textSize="18sp" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/tv_error_message_display"
+        android:textSize="22sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:text="@string/error_message"
+        android:visibility="invisible" />
+
+    <ProgressBar
+        android:id="@+id/pb_loading_indicator"
+        android:layout_height="42dp"
+        android:layout_width="42dp"
+        android:layout_gravity="center"
+        android:visibility="invisible" />
+</FrameLayout>
+
+open the MainActivity.java and make a variable for TextView and Progressbar inside the MainActivity class.
+
+private TextView mErrorMessageDisplay;
+private ProgressBar mLoadingIndicator;
+
+Use findByViewId to get a reference to TextView and ProgressBar.This should be done inside the onCreate() function.
+
+mErrorMessageDisplay = (TextView) findViewById(R.id.tv_error_message_display);
+mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
+
+
+Create a showJsonDataView() function, inside the MainActivity, to make error message invisible and results visible.
+private void showJsonDataView() {
+    mErrorMessageDisplay.setVisibility(View.INVISIBLE);
+    mSearchResultsTextView.setVisibility(View.VISIBLE);
+}
+
+Create a showErrorMessage() function, inside the MainActivity, to make results invisible and error message visible.
+private void showErrorMessage() {
+    mSearchResultsTextView.setVisibility(View.INVISIBLE);
+    mErrorMessageDisplay.setVisibility(View.VISIBLE);
+}
+
+Override the onPreExecute() function,inside the GithubQueryTask class,and set the visibility of the Progress Bar.
+@Override
+protected void onPreExecute() {
+    super.onPreExecute();
+    mLoadingIndicator.setVisibility(View.VISIBLE);
+}
+
+override another onPostExecute() function which takes stirng as input and and display the results.As soon as loading is completed, hide the loadind bar and show the results we have valid ,non-null results.Show the error if results are null. 
+
+@Override
+protected void onPostExecute(String githubSearchResults) {
+    mLoadingIndicator.setVisibility(View.INVISIBLE);
+    if (githubSearchResults != null && !githubSearchResults.equals("")) {
+        showJsonDataView();
+        mSearchResultsTextView.setText(githubSearchResults);
+    } else {
+        showErrorMessage();
+    }
+}
+
+That's it for this tutorial we successfully connected the app to internet and getting data in Json.And now you can use this data and make it readable and interactive for user.  

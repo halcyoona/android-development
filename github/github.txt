@@ -6,7 +6,7 @@ In this tutorial we can take an example of Github Query App and make a connectio
 
 Creating Layout
 
-After starting empty activity in a new project in Andriod Studio,First thing you have to do is go to activity_main.xlm and make some changes.Delete a Constraint Layout and create a new Linear Layout.Create a EditText, inside Linear Layout, where user can enter their input data and give proper ID to EditText and other properties.Create  a TextView,inside Linear Layout, to show the Url and give proper ID and other properties.You have to create a ScrollView,inside Linear Layout, to scroll on a result. Create a TextView  inside the ScrollView and give proper ID to this and other properties.
+After starting empty activity in a new project in Android Studio,First thing you have to do is  to open activity_main.xml and make some changes.Delete a Constraint Layout and create a new Linear Layout.Create a EditText, inside Linear Layout, where user can enter their input data and give proper ID to EditText and other properties.Create a TextView,inside Linear Layout, to show the Url and give proper ID and other properties.You have to create a ScrollView,inside Linear Layout, to scroll on a result. Create a TextView inside the ScrollView and give proper ID to this and other properties.
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -56,13 +56,13 @@ mSearchBoxEditText = (EditText) findViewById(R.id.et_search_box);
 mUrlDisplayTextView = (TextView) findViewById(R.id.tv_url_display);
 mSearchResultsTextView = (TextView) findViewById(R.id.tv_github_search_result_json);
 
-Move to build.gradle and remove the following dependency from dependencies as we are not using Constraint layout
+Move to build.gradle and remove the following dependency from dependencies as we are not using Constraint layout.
 implementation 'com.android.support.constraint:constraint-layout:1.1.2'
 
-Move to res directory in this directory their is sub-directory named as "values" and  there is string.xlm.Open string.xlm and add a string resource called search with the title Search.
+Move to res directory in this directory there is sub-directory named as "values" and there is string.xlm.Open strings.xml and add a string resource called search with the title "Search".
 <string name="search">Search</string>
 
-Create a sub-directory menu in a res directory and inside menu create main.xlm.Add following line in properties of menu-tag.
+Create a sub-directory menu in a res directory and inside menu create main.xml. Add following line in properties of menu-tag.
 xmlns:app="http://schemas.android.com/apk/res-auto"
 
 Create a item inside the menu and give a proper ID and title.
@@ -72,28 +72,26 @@ Create a item inside the menu and give a proper ID and title.
         app:showAsAction="ifRoom"
         android:title="@string/search"/>
 
-app:showAsAction is used to show "Search" as button on a menu tab. 
-
-Override the onCreateOptionsMenu(), inside the MainActivity class.In this function, we are going to call getMenuInflator() and that will inflate the menu resources that is passed to it.
+app:showAsAction is used to show "Search" as button on a menu tab.
+Override the onCreateOptionsMenu(), inside the MainActivity class.In this function, we are going to call getMenuInflater() and that will inflate the menu resources that is passed to it.
 
 @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.main, menu);
+    return true;
+}
+
+
+Override the onOptionsItemSelected(), inside the MainActivity class.In this function get the ID of the selected item and match the id of search_action then return true.
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    int menuItemThatWasSelected = item.getItemId();
+    if (menuItemThatWasSelected == R.id.action_search){
         return true;
     }
-
-
-Override the onOptionsItemSelected(), inside the MainActivity class.In this function get the ID of the selected item and match the id of search_search then return true.
-
-
-@Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int menuItemThatWasSelected = item.getItemId();
-        if (menuItemThatWasSelected == R.id.action_search){
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+    return super.onOptionsItemSelected(item);
+}
 
 Layout is completed. Now move to next part i.e connectivity to internet.
 
@@ -101,14 +99,14 @@ Layout is completed. Now move to next part i.e connectivity to internet.
 
 Connectivity
 
-Make sub-directory with the name 'utilities' in the directory where MainActivity.java is placed.With in the utilities directory, make a class of NetworkUtils.These utilities used to communicate with the internet.In NetworkUtils class, we declare string variable for API that we are using and in which order you have to show data i.e sorting and other properties of you desire.
+Make sub-directory with the name 'utilities' in the directory where MainActivity.java is placed.With in the utilities directory, make a class of NetworkUtils. These utilities used to communicate with the internet. In NetworkUtils class, we declare string variable for API that we are using and in which order you have to show data i.e sorting and other properties of you desire.
 
 final static String GITHUB_BASE_URL = "https://api.github.com/search/repositories";
 final static String PARAM_QUERY = "q";
 final static String PARAM_SORT = "sort";
 final static String sortBy = "stars";  
 
-Create a buildUrl() inside the NetworlUtils class, that will take search text as parameter and that function return a URL of the search text.Basically,In URL there is some specail character like &,?. So we are not be able to put these character in a specified position therefore we use Uri class to built a URL.First we parse the base Url on which Url is build upon and then append the parameters like search parameter and sort parameter.
+Create a buildUrl() function, inside the NetworlUtils class, that will take search text as parameter and  return a URL of the search text.Basically, In URL there is some special character like &,?. So we are not be able to put these character in a specified position therefore we use Uri class to build a URL.First we parse the base Url on which Url is build upon and then append the parameters like search parameter and sort parameter.
 
 public static URL buildUrl(String githubSearchQuery) {
     Uri builtUri = Uri.parse(GITHUB_BASE_URL).buildUpon().appendQueryParameter(PARAM_QUERY,githubSearchQuery).appendQueryParameter(PARAM_SORT,sortBy).build();
@@ -124,7 +122,7 @@ public static URL buildUrl(String githubSearchQuery) {
 }
 
 
-Create getResponseFromHttpUrl() inside the Networkutils class, that takes URL as parameter and return a entire response from HTTP.We make a object i.e urlConnection, of class HttpURLConnection and call a openConnection() function to open the connection with the help of Url.Create another object i.e in, of InputStrem to take inputdata from that urlConnection by using getInputStream() function. We declare the object of Scanner class to read the data from from InputStream variable return that data as a string. 
+Create getResponseFromHttpUrl() inside the Networkutils class, that takes URL as parameter and return an entire response from HTTP.We make an object i.e urlConnection , of class HttpURLConnection and call a openConnection() function to open the connection with the help of Url. Create another object i.e "in", of InputStrem to take input data from that urlConnection by using getInputStream() function. We declare the object of Scanner class to read the data from InputStream variable return that data as a string.
 
 public static String getResponseFromHttpUrl(URL url) throws IOException {
     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -146,7 +144,7 @@ public static String getResponseFromHttpUrl(URL url) throws IOException {
 }
 
 
-Move to MainActivity.java and create makeGithubSearchQuery() inside the MainActivity class,in this function build a url with the search text from EditText and set the build Url to the TextView where we have to show the Url.
+Open MainActivity.java and create makeGithubSearchQuery() inside the MainActivity class,in this function build a url with the search text from EditText and set the build Url to the TextView where we have to show the Url.
 
 private void makeGithubSearchQuery() {
     String githubQuery = mSearchBoxEditText.getText().toString();
@@ -155,35 +153,25 @@ private void makeGithubSearchQuery() {
 }
 
 
-call makeGithubSearchQuery() inside the if statement of onOptionsItemSelected() function.
+Call makeGithubSearchQuery() inside the if statement of onOptionsItemSelected() function.
 
 if (menuItemThatWasSelected == R.id.action_search){
 	makeGithubSearchQuery(); 	
     return true;
 }
 
-Now look at our app is connected to internet.
+Run the app.It will show you Url in Url specified position.
 
-Move to manifest directory and open AndriodManifest.xml and add internet permissions.Andriod user do not want any application to access another Andriod application directly without any permission from you.We should first ask for permission from user to access to another app like to check your location, to open camera, to connect to internet.   
+Move to manifest directory and open AndriodManifest.xml and add internet permissions. Android user do not want any application to access another Android application directly without any permission from you.We should first ask for permission from user to access to another app like to check your location, to open camera, to connect to internet.Therefore we use permissions.   
 <uses-permission android:name="android.permission.INTERNET"/>
 
-.Declare a string to store a results.Use try / catch block to catch the IOException and inside this block Call to getResponseFromHttpUrl() and show results in mSearchResultsTextView.
-
-String githubSearchResults = null;
-try{
-    githubSearchResults = NetworkUtils.getResponseFromHttpUrl(githubSearchUrl);
-    mSearchResultsTextView.setText(githubSearchResults);
-}
-catch (IOException e){
-    e.printStackTrace();
-}
 
 AsyncTask
 
-Andriod through exception when you try to access network on a main thread.Andriod support multipe things at time you can see this when you press recent's key to swipe to anohter app.Andriod use multithreading. Each andriod app can be  divided into multiple threads of excution and that can all run concurrently. On Modern andriod device, these thread of execution be schedule by the OS to run on the different CPU cores.To make thing easier for andriod developer, Andriod app have Single User Interface Thread as a main thread and this thread is responsible for getting advance from various sensors and setting up the next frame to draw.To run to ideal 60 FPS,we need to make sure that  all the computation between draws take less then 17ms.In other words, we want to do as little as possible on this main thread but netwroking takes seconds that's means user will be frozen all that time if the networking is call on a main thread.After five second of ignoring user's input,Andriod actually prompt the user to close the app.So when using network, we need to run network as a secondary execution thread therefore we need to make some changes to the interface like set the TextView to show the text in UI(User Interface) thread.Therefore, Andriod provide helpful frame work  for this purpose i.e AsyncTask.
+Android through exception when you try to access network on a main thread. Android support multiple things at time you can see this when you press recent's key to swipe to another app. Android use multi-threading. Each android app can be divided into multiple threads of execution and that can all run concurrently. On Modern android device, these thread of execution be schedule by the OS to run on the different CPU cores.To make thing easier for android developer, Android app have Single User Interface Thread as a main thread and this thread is responsible for getting advance from various sensors and setting up the next frame to draw.To run to ideal 60 FPS,we need to make sure that all the computation between draws take less than 17ms. In other words, we want to do as little as possible on this main thread but netwroking takes seconds that's means user will be frozen all that time if the networking is call on a main thread.After five second of ignoring user's input,Andriod actually prompt the user to close the app.So when using network, we need to run network as a secondary execution thread therefore we need to make some changes to the interface like set the TextView to show the text in UI(User Interface) thread.Therefore, Android provide helpful frame-work for this purpose i.e AsyncTask. 
 
 Asyntask is generic class, which allow you to run a task on background thread while publishing results on UI(User Interface) thread.
-
+ 
 Open MainActivity.java and create a class GithubQueryTask that extends AsyncTask class,inside the MainActivity class.And override the doInBackground() function, which takes Url array as parameter and return the results in string.
 
 public class GithubQueryTask extends AsyncTask<URL, Void, String> {
@@ -209,8 +197,8 @@ new GithubQueryTask().execute(githubSearchUrl);
 
 Polishing
 
-Through out in above tutorial we aren't handle any erorrs like there would be network problem or other errors.So we gonna handle error here.
-First go into the res directory there is a sub-directory values and inside in sub-directory, open string.xml and add string of error message.
+Through out in above tutorial we aren't handle any erorrs  there would be network problem or other errors.So we gonna handle error here.
+First go into the res directory there is a sub-directory values and inside in sub-directory, open strings.xml and add string of error message
 <string name="error_message">Failed to get results. Please try again.</string>
 
 Open activity_main.xml and wrap the scrollView inside the frame layout. Create a TextView to show error message and create a ProgressBar to indicate loading , inside the frame layout and make them invisible.

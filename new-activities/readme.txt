@@ -8,7 +8,7 @@ How we start one activity from another activity, instead of having activities di
 
 Working.
 
-First open the activity_main.xml and make linear layout and inside linear layout make EditText and button and give them proper ids.And also set dimens.
+Firt start a new project and open the activity_main.xml and make linear layout and inside linear layout make EditText and button and give them proper ids.And also set dimens.
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -105,18 +105,9 @@ open AndroidManifest.xml and make some cahnges inside the application tags.
 </activity>
 
 
-Open MainActivity.java and make some changes in the mDoSomethingCoolButton.Link the mainActivity to childActivity.
+Now you can check the app and your button is working and bring you to another activity.
 
-mDoSomethingCoolButton.setOnClickListener(new View.OnClickListener() {
-    @Override
-    public void onClick(View v) {
-        Context context = MainActivity.this;
 
-        Class destinationActivity = ChildActivity.class;
-        Intent intent = new Intent(context,destinationActivity);
-        startActivity(intent);
-    }
-});
 
 last thing we have to do is passing data between activities.First you have to open MainActivity.java and store the content of edit text into a string variable(And this should be done inside the onClick() Function).
 
@@ -124,9 +115,22 @@ String textEntered = mNameEntry.getText().toString();
 
 To pass this data to child activity you can use the method putextra(). putextra() function need two parameter i.e key and value.  value  is the data that you want to transfer and key is the name of the data that you are transferring.
 
-Intent startChildActivityIntent = new Intent(context,destinationActivity);
-startChildActivityIntent.putExtra(Intent.EXTRA_TEXT, textEntered);
-startActivity(startChildActivityIntent);
+After making some changes in the mDoSomethingCoolButton.finally we have this:
+
+mDoSomethingCoolButton.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+
+    	String textEntered = mNameEntry.getText().toString();
+        Context context = MainActivity.this;
+
+        Class destinationActivity = ChildActivity.class;
+        IIntent startChildActivityIntent = new Intent(context,destinationActivity);
+		startChildActivityIntent.putExtra(Intent.EXTRA_TEXT, textEntered);
+		startActivity(startChildActivityIntent);
+
+    }
+});
 
 Now move to ChildActivity.java and get the intent from MainActivity.So we can retrieve the data that passed in it.And then if intent has some extra text save it in a string and display the text.
 
